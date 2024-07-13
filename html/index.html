@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="envVar"> TWSG </title>
+    <!-- <link rel="stylesheet" href="styles.css"> -->
+    <style>
+        body {
+            background-color: LightSteelBlue;
+            font-family: 'Arial', sans-serif;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 90px;
+            font-weight: bold;
+            margin-top: 50px;
+            margin-bottom: 20px;
+            color: #3d1212;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        h2 {
+            text-align: center;
+            margin-top: 50px;
+            margin-bottom: 20px;
+            color: #3d1212;
+        }
+
+        #beginGame button {
+            font-size: 45px;
+            margin-top: 75px;
+            background-color: lightgray;
+            color: #3d1212;
+            display: inline-block;
+            justify-content: center;
+            padding: 30px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        #nicknameInput {
+            text-align: center;
+            border: 2px solid #4a90e2;
+            font-size: 35px;
+            margin-top: 75px;
+            background-color: lightgray;
+            color: #3d1212;
+            display: inline-block;
+            justify-content: center;
+            padding: 30px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        #nicknameInput input[type="text"] {
+            margin-bottom: 15px;
+            margin-left: 20px;
+            height: 15px;
+        }
+
+        #nicknameInput button,
+        #waitingPlayersList button {
+            background-color: #1a5fa8;
+            color: #fff;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        #nicknameInput button:hover,
+        #waitingPlayersList button:hover {
+            background-color: gray;
+        }
+
+        #waitingPlayersList,
+        #waitingPlayersList ul {
+            text-align: center;
+            font-size: 25px;
+        }
+
+        .custom-ul {
+            list-style-type: none;
+        }
+
+        .container{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .buttonTable{
+            border-collapse: collapse;
+            float: left;
+        }
+
+        td{
+            border: 1px black;
+            padding: 0;
+        }
+
+        .buttonTable button{
+            background-color: #f5fffa;
+            padding: 0;
+            margin: 0;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+        }
+
+        .buttonTable button:hover{
+            background-color: #008080;
+            color:white;
+        }
+
+        .playerInfo {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        .playerInfo ul {
+            list-style-type: none;
+            font-size: 18px;
+        }
+
+        .player1Info{
+            color: red;
+        }
+
+        .player2Info{
+            color: blue;
+        }
+
+        .info{
+            margin-left: 50px;  
+        }
+
+        .word{
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .wordBank {
+            border: 2px solid #3d1212;
+            padding: 10px;
+            background-color: rgb(239, 243, 244);
+        }
+        #gameOverScreen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            width: 60vw; /* 50% of the viewport width */
+            height: 40vh; /* 30% of the viewport height */
+        }
+
+
+
+        .strikethrough{
+            text-decoration: line-through;
+        }
+
+        .timer{
+            font-size: 200%;
+            left: 50%;
+            top: 3%;
+        }
+    </style>
+</head>
+<body>
+    <h1>TheWordSearchGame</h1>
+    <div id="beginGame">
+        <button onclick="beginGame()"> START </button>
+    </div>
+    <div id="nicknameInput" style="display: none;">
+        <label for="nickname">Enter your nickname:</label>
+        <input type="text" id="nickname">
+        <button onclick="joinLobby()">submit</button>
+    </div>
+    <div id="waitingPlayersList" style="display:none;">
+        <h2>Waiting Players:</h2>
+        <ul id="playersList" class="custom-ul"></ul>
+        <button onclick="startGame()">Play with 2 Players</button>
+    </div>
+    <div class="container">
+        <div class ="waitScreen" id="waitScreen" style="display:none;">
+            <ul class="waitText">Waiting For Another Player to Join...</ul>
+        </div>
+        <div class="buttonTable" id="gameTable" style="display:none;">    
+        </div>
+        <div id="gameOverScreen" style="display:none;">
+            <h1>Game Over</h1>
+            <h2 id="winnerName"></h2>
+            <button onclick="backToMenu()">Back to Menu</button>
+        </div>
+        <div class="info">
+          <div class="playerInfo" id="playerInfo" style="display:none;">
+            <ul class="player1Info" id="player1Info">Player1:</ul>
+            <ul class="player2Info" id="player2Info">Player2:</ul>
+            
+          </div>
+          <div class="hintTimer" id="hintTimer" style="display:none;">
+            <ul class="textTimer">Time until Hint: </ul>
+          </div>
+          <div class="timer" id="timer"></div>
+          <div class="wordBank" id="wordBank" style="display:none;">
+              <h2 class="wordBank">Word Bank</h2>
+              <ul class="word" onclick="scratchOut(this)" id="w1">word1</ul>
+              <ul class="word" onclick="scratchOut(this)" id="w2">word2</ul>
+              <ul class="word" onclick="scratchOut(this)" id="w3">word3</ul>
+              <ul class="word" onclick="scratchOut(this)" id="w4">word4</ul>
+              <ul class="word" onclick="scratchOut(this)" id="w5">word5</ul>
+              <ul class="word" onclick="scratchOut(this)" id="w6">word6</ul>
+              <ul class="word" onclick="scratchOut(this)" id="w7">word7</ul>
+              <ul class="word" onclick="scratchOut(this)" id="w8">word8</ul>
+              <ul class="word" onclick="scratchOut(this)" id="w9">word9</ul>
+              <ul class="word" onclick="scratchOut(this)" id="w10">word10</ul>
+          </div>
+        </div>
+        
+    </div>
+    <script >
+    function beginGame() {
+        document.getElementById("beginGame").style.display = "none";
+        document.getElementById("nicknameInput").style.display = "block";
+    }
+    var serverUrl;
+    serverUrl = "ws://" + window.location.hostname + ":9115";
+    // Create the connection with the server
+    socket = new WebSocket(serverUrl);
+
+        var nicknames = [];
+        var displayNames = [];
+        var myUsername = '';
+        var myOp = '';
+        var redPlayer = '';
+        var bluePlayer = '';
+        var myColor = '';
+        var myScore = '';
+        var myGameId = 0;
+
+        class UserEvent {
+            
+            constructor(){
+                this.GameId = 0;
+                this.playerId = 0;
+                this.button = 0;
+                this.userName = '';
+                this.buttonRow = 0;
+                this.buttonCol = 0;
+                this.type = '';
+                this.wordHighlighted = '';
+                this.score1 = 0;
+                this.score2 = 0;
+                this.wordList = [];
+            }
+
+            setUsername(nickname){
+                this.userName = nickname;
+            }
+
+            setButtonRow(Row){
+                this.buttonRow = Row;
+            }
+            setScore1(score){
+                this.score1 = score;
+            }
+            setScore2(score){
+                this.score2 = score;
+            }
+            setGameId(Id){
+                this.GameId = Id;
+            }
+            
+
+            setButtonCol(Col){
+                this.buttonCol = Col;
+            }
+            setButtonRowE(Row){
+                this.buttonRowE = Row;
+            }
+
+            setButtonColE(Col){
+                this.buttonColE = Col;
+            }
+
+            setType(Type){
+                this.type = Type;
+            }
+            setWordHighlighted(word) {
+                this.wordHighlighted = word; // Setter for the highlighted word
+            }
+
+            setWordList(wordList){
+                this.wordList = wordList;
+            }
+
+        }
+        var globalWordBank = [];  // This will store your word bank globally
+
+socket.onopen = function(event) {
+    console.log("Connection established.");
+    console.log(env);
+};
+var gID= 0;
+socket.onmessage = function(event) {
+    let message = JSON.parse(event.data);
+    
+    // Check the type of message
+
+    if (message.type === "versionSend"){
+        document.title = message.data + " TWSG";
+    }
+
+    //check if message is grid and its for my game (gameId check)
+    if (message.type === "grid") {
+
+        let receivedGameId = message.gameId;
+
+        if(receivedGameId === myGameId){
+
+            // Handle array data
+            let receivedGridArray = message.data;
+            console.log("array received");
+    
+            // Call makeTable() with the received array
+            makeTable(receivedGridArray);
+
+        }
+
+    }   
+
+    if (message.type === "WordList") {
+
+        let receivedGameId = message.gameId;
+
+        if(receivedGameId === myGameId){
+
+           
+            let receivedWordlist = message.data;
+            console.log("WordList received");
+            globalWordBank = receivedWordlist;
+            const wordBank = document.getElementById("wordBank");
+            wordBank.style.display = "block";
+            const wordBankList = wordBank.querySelector(".wordBank");
+            wordBankList.innerHTML = "Word Bank: ";
+            const randomIndex = Math.floor(Math.random() * receivedWordlist.length);
+            const randomWord = receivedWordlist[randomIndex];
+
+            const firstLetter = randomWord.charAt(0).toUpperCase(); // Assuming you want the first letter in uppercase
+        
+            receivedWordlist.forEach((word, index) => {
+                const listItem = wordBank.querySelector(`#w${index + 1}`);
+                if (listItem) {
+                    listItem.textContent = word;
+                }
+            });
+
+    //wordBank.style.display = "none";
+
+    }
+    
+}
+
+    if (message.type === "waitingPlayers") {
+        // Handle waiting players data
+        console.log("names");
+        let players = message.data;
+        displayWaitingPlayers(players);
+    }
+
+    if (message.type === "waiting") {
+        if (message.username === myUsername){
+
+            console.log("waiting Received");
+            document.getElementById("playerInfo").style.display = "none";
+            document.getElementById("wordBank").style.display = "none";
+            document.getElementById("hintTimer").style.display = "none";
+            console.log("waitscreen");
+            document.getElementById("waitScreen").style.display = "block";
+            console.log("waitscreen done");
+
+        }
+    }
+
+    if (message.type === "userNames"){
+
+        let namesReceived = message.data;
+        console.log("usernames received by frontEnd");
+        addUsernames(namesReceived);
+        updateNames();
+    }
+
+    if (message.type === "giveColor"){
+
+        let usernameCheck = message.username;
+        if (usernameCheck === myUsername){
+            let colorReceived = message.data;
+            myColor = colorReceived;
+            console.log("color set to: " + myColor);
+            let gameIdReceived = message.gameId;
+            myGameId = gameIdReceived;
+            gID = myGameId;
+            console.log("gameId set to: " + myGameId);
+            
+            document.getElementById("playerInfo").style.display = "block";
+            document.getElementById("wordBank").style.display = "block";
+            document.getElementById("hintTimer").style.display = "block";
+            document.getElementById("waitScreen").style.display = "none";
+            startTimer(timerDuration, timerDisplay);
+        }
+
+    }
+
+    if (message.type === "givePlayers"){
+        let receivedGameId = message.gameId;
+        if (myGameId === receivedGameId){
+
+            myOp = message.data;
+
+            if(message.username === myColor && myColor === "blue"){
+                bluePlayer = myUsername;
+                redPlayer = myOp;
+            } else if (message.username === myColor && myColor === "red"){
+                bluePlayer = myOp;
+                redPlayer = myUsername;
+            }
+            document.getElementById("player1Info").innerHTML = redPlayer + " : " + player1Score;
+            document.getElementById("player2Info").innerHTML = bluePlayer + " : " + player2Score;
+        }
+    }
+    
+    if (message.type === "score1") {
+        let usernameCheck = message.gameId;
+        if (usernameCheck === myGameId){
+        score1received = message.data;
+        player1Score = score1received;
+        player1Info.innerHTML = redPlayer + " : " + score1received;
+        checkGameOver();
+        }
+    }
+    if (message.type === "score2") {
+        let usernameCheck = message.gameId;
+        if (usernameCheck === myGameId){
+        score2received = message.data;
+        player2Score = score2received;
+        player2Info.innerHTML = bluePlayer + " : " + score2received;
+        checkGameOver();
+        }
+    }
+
+    if (message.type === "colorUpdate"){
+        let receivedGameId = message.GameId;
+
+            if (receivedGameId = myGameId){
+
+                let buttonColor = message.username;
+                let buttonArr = [];
+                buttonArr = message.data;
+
+                let buttonLocation = buttonArr[0] + "_" + buttonArr[1];
+
+                document.getElementById(buttonLocation).style.backgroundColor = buttonColor;
+            
+            }
+
+    }
+
+};
+// Set the timer for 5 minutes (in seconds)
+const timerDuration = 1 * 60;
+
+
+// Get the timer element
+const timerDisplay = document.getElementById('timer');
+
+function generateRandomWordFromWordBank() {
+    const wordBank = document.querySelectorAll(".wordBank .word"); // Select all word elements
+    const randomIndex = Math.floor(Math.random() * wordBank.length); // Get a random index
+    const randomWordElement = wordBank[randomIndex]; // Select the random word element
+    const randomWord = randomWordElement.textContent.trim(); // Get the text content of the selected element
+    return randomWord;
+}
+
+let previousLetterIndex = null;
+
+// Function to highlight a letter in the game table
+let isSelecting = false;
+let startCell = null;
+let endCell = null;
+let highlightedWords = []; // Array to store the values of highlighted buttons
+
+function highlight() {
+    const wordBank = document.querySelectorAll(".wordBank .word"); // Select all word elements
+    const randomIndex = Math.floor(Math.random() * wordBank.length); // Get a random index
+    const randomWordElement = wordBank[randomIndex]; // Select the random word element
+    const randomWord = randomWordElement.textContent.trim(); // Get the text content of the selected element
+
+    // Iterate over each letter in the random word and highlight it
+    
+        const letter = randomWord[0].toUpperCase(); // Convert letter to uppercase
+        searchLetterInGameTableAndHighlight(letter); // Highlight the letter in the game table
+}
+
+function restartGame() {
+    player1Score = 0;
+    player2Score = 0;
+    document.getElementById("player1Info").innerHTML = redPlayer + " : " + player1Score;
+    document.getElementById("player2Info").innerHTML = bluePlayer + " : " + player2Score;
+    document.getElementById("gameOverScreen").style.display = "none";
+    startGame(); // You will need to implement this to reset your game setup
+}
+
+console.log(""+myGameId);
+
+function makeTable(gridArray) {
+    const gameTable = document.getElementById("gameTable");
+    gameTable.innerHTML = ''; // Clear previous table if any
+
+    for (var row = 0; row < gridArray.length; row++) {
+        const tableRow = document.createElement("tr");
+
+        for (var col = 0; col < gridArray[row].length; col++) {
+            const cell = document.createElement("td");
+            const button = document.createElement("button");
+
+            // Set button id to `row_col` format
+            button.id = `${row}_${col}`;
+            button.textContent = gridArray[row][col];
+
+            button.addEventListener("click", function(event) {
+                handleButtonClick(event, this, cell.cellIndex);
+            });
+
+            cell.appendChild(button);
+            tableRow.appendChild(cell);
+        }
+
+        gameTable.appendChild(tableRow);
+    }
+}
+
+var player1Score = 0;
+var player2Score = 0;
+ // Initial color, assuming player 1 is 'red' and player 2 is 'blue'
+
+// Assuming socket is already connected and globalWordBank is defined
+// var socket = new WebSocket("URL");
+// var globalWordBank = ["example", "words", "here"];
+
+function checkGameOver() {
+    if (globalWordBank.length === 0) {
+        displayGameOver();  // Call function to display game over message
+    }
+}
+
+function backToMenu() {
+    U.setUsername(myUsername);
+    U.setType("removeUsername");
+    socket.send(JSON.stringify(U));
+    location.reload();  // Reloads the current document
+}
+
+function displayGameOver() {
+    hideGameElements();  // Hide game elements first
+
+    const gameOverScreen = document.getElementById("gameOverScreen");
+    gameOverScreen.style.display = "block";  // Then show the game over screen
+
+    let winner = player1Score >= 10 ? "Player 1" : "Player 2";
+    document.getElementById("winnerName").textContent = winner + " wins!";
+}
+
+function showGameElements() {
+    const elementsToShow = [
+        document.getElementById("gameTable"),
+        document.getElementById("wordBank"),
+        document.getElementById("playerInfo"),
+         // Add other IDs as needed
+    ];
+
+    elementsToShow.forEach(element => {
+        if (element) element.style.display = 'block';  // Reset display properties
+    });
+    document.getElementById("hintTimer").style.color = "LightSteelBlue";
+
+
+}
+// Add this check to where scores are incremented
+function incrementPlayerScore() {
+    if (myColor === "red") {
+        player1Score++;
+        document.getElementById("player1Info").innerHTML = redPlayer + " : " + player1Score;
+    } else if (myColor === "blue") {
+        player2Score++;
+        document.getElementById("player2Info").innerHTML = bluePlayer + " : " + player2Score;
+    }
+    
+}
+
+function hideGameElements() {
+    const elementsToHide = [
+        document.getElementById("gameTable"),
+        document.getElementById("wordBank"),
+        document.getElementById("playerInfo"),
+        document.getElementById("hintTimer"), 
+    ];
+
+    elementsToHide.forEach(element => {
+        if (element) element.style.display = 'none';
+    });
+}
+
+function sendHighlightedWord(highlightedWords, startCell, endCell) {
+    const wordsString = highlightedWords.join('');
+    if(globalWordBank.includes(wordsString)){
+
+        incrementPlayerScore();
+
+        U.setWordHighlighted(wordsString);
+        U.setWordList(globalWordBank);
+        U.setGameId(myGameId);
+        console.log("remove Word");
+        U.setType("removeWord");
+        socket.send(JSON.stringify(U));
+
+         
+    }
+    J = new UserEvent();
+        J.setWordHighlighted(wordsString);
+        J.setButtonRow(startCell.id.split('_')[0]); // Assuming IDs are formatted as 'row_col'
+        J.setButtonCol(startCell.id.split('_')[1]);
+        J.setButtonRowE(endCell.id.split('_')[0]); // Assuming IDs are formatted as 'row_col'
+        J.setButtonColE(endCell.id.split('_')[1]);
+        J.setButtonColE(endCell.id.split('_')[1]);
+        J.setScore1(player1Score);
+        J.setScore2(player2Score);
+        J.setType("wordHighlight");
+        J.setGameId(myGameId);
+        console.log(myGameId);
+        console.log(J.wordHighlighted);
+        socket.send(JSON.stringify(J));
+
+}
+
+// Debugging to ensure variables are set
+console.log(globalWordBank);
+
+function handleButtonClick(event, button, cellIndex) {
+    if (!isSelecting) {
+        // First click sets the starting cell
+        clearHighlights(); // Clear previous highlights if any
+        startCell = button;
+        const startCoords = startCell.id.split('_').map(Number);
+
+        //send first click to broadcast so it is highlighted for both players
+        U.setButtonRow(startCoords[0]);
+        U.setButtonCol(startCoords[1]);
+        U.setType("colorUpdate");
+        U.setGameId(myGameId);
+        //reusing wordHighlighted for color so we dont have so many data types in event
+        U.setWordHighlighted(myColor);
+        socket.send(JSON.stringify(U));
+
+
+        startCell.style.backgroundColor = myColor;  // Highlight the start cell
+        isSelecting = true;
+        highlightedWords = []; // Reset the highlighted words array
+    } else {
+        // Second click sets the ending cell and checks if selection is valid
+        let endCell = button;
+        if (isValidSelection(startCell, endCell)) {
+            highlightRange(startCell, endCell);
+            sendHighlightedWord(highlightedWords, startCell, endCell);
+        } else {
+            console.log("Invalid selection. Please select a straight or diagonal line!");
+            alert("Invalid selection. Please select a straight or diagonal line!");
+            //startCell.style.backgroundColor = "#fff";
+
+            //reuse update color broadcast set to reset color to white
+            const startCoords = startCell.id.split('_').map(Number);
+            //send second click to broadcast so it is cleared for both players
+            U.setButtonRow(startCoords[0]);
+            U.setButtonCol(startCoords[1]);
+            U.setType("colorUpdate");
+            U.setGameId(myGameId);
+            //reusing wordHighlighted for color so we dont have so many data types in event
+            U.setWordHighlighted("#f5fffa");
+            socket.send(JSON.stringify(U));
+
+        }
+        isSelecting = false;
+        startCell = null;
+        clearHighlights();
+    }
+}
+
+function dehighlightAllLettersInGameTable() {
+    const gameTable = document.getElementById("gameTable");
+
+    // Check if gameTable exists
+    if (gameTable) {
+        const cells = gameTable.querySelectorAll("td");
+
+        // Iterate over each cell in the game table
+        for (let i = 0; i < cells.length; i++) {
+            // Get the button element in the current cell
+            const button = cells[i].querySelector("button");
+            
+            // Clear the color of the button
+            if (button && button.style.backgroundColor == "yellow") {
+
+                button.style.backgroundColor = "#f5fffa"; // Clear the color
+                
+            }
+        }
+    }
+}
+
+function isValidSelection(start, end) {
+    const startCoords = start.id.split('_').map(Number);
+    const endCoords = end.id.split('_').map(Number);
+    const rowDifference = Math.abs(startCoords[0] - endCoords[0]);
+    const colDifference = Math.abs(startCoords[1] - endCoords[1]);
+
+    return rowDifference === colDifference || rowDifference === 0 || colDifference === 0;
+}
+
+function highlightRange(start, end) {
+    const startCoords = start.id.split('_').map(Number);
+    const endCoords = end.id.split('_').map(Number);
+    const stepRow = startCoords[0] === endCoords[0] ? 0 : (startCoords[0] < endCoords[0] ? 1 : -1);
+    const stepCol = startCoords[1] === endCoords[1] ? 0 : (startCoords[1] < endCoords[1] ? 1 : -1);
+
+    let currentRow = startCoords[0];
+    let currentCol = startCoords[1];
+
+    while (currentRow !== endCoords[0] + stepRow || currentCol !== endCoords[1] + stepCol) {
+        let button = document.getElementById(`${currentRow}_${currentCol}`);
+        //button.style.backgroundColor = myColor; // Highlight the button
+
+        highlightedWords.push(button.textContent); // Store the button's text content
+
+        currentRow += stepRow;
+        currentCol += stepCol;
+    }
+
+    const wordsString = highlightedWords.join('');
+    console.log("highlighted Words: " + highlightedWords);
+    console.log("wordsString: " + wordsString);
+
+    if(globalWordBank.includes(wordsString)){
+
+        let currentRow = startCoords[0];
+        let currentCol = startCoords[1];
+    
+        while (currentRow !== endCoords[0] + stepRow || currentCol !== endCoords[1] + stepCol) {
+            let button = document.getElementById(`${currentRow}_${currentCol}`);
+            //button.style.backgroundColor = myColor; // Highlight the button
+    
+            //send word buttons to broadcast so it is highlighted for both players
+            U.setButtonRow(currentRow);
+            U.setButtonCol(currentCol);
+            U.setType("colorUpdate");
+            U.setGameId(myGameId);
+            //reusing wordHighlighted for color so we dont have so many data types in event
+            U.setWordHighlighted(myColor);
+            socket.send(JSON.stringify(U));
+    
+            currentRow += stepRow;
+            currentCol += stepCol;
+        }
+
+    } else {
+        console.log("INVALID WORD!");
+        //reuse update color broadcast set to reset color to white
+        //send second click to broadcast so it is cleared for both players
+        U.setButtonRow(startCoords[0]);
+        U.setButtonCol(startCoords[1]);
+        U.setType("colorUpdate");
+        U.setGameId(myGameId);
+        //reusing wordHighlighted for color so we dont have so many data types in event
+        U.setWordHighlighted("#f5fffa");
+        socket.send(JSON.stringify(U));
+    }
+}
+
+function clearHighlights() {
+    const buttons = document.querySelectorAll("#gameTable button");
+    buttons.forEach(button => {
+        //button.style.backgroundColor = ""; // Reset background color
+    });
+}
+
+
+
+// Function to search and highlight a letter in the game table
+function searchLetterInGameTableAndHighlight(letter) {
+    const gameTable = document.getElementById("gameTable");
+    dehighlightAllLettersInGameTable();
+    // Check if gameTable exists
+    if (gameTable) {
+        const cells = gameTable.querySelectorAll("td");
+
+        // Iterate over each cell in the game table
+        for (let i = 0; i < cells.length; i++) {
+            // Get the button element in the current cell
+            const button = cells[i].querySelector("button");
+            // Get the text content of the button
+            const buttonText = button ? button.textContent.trim().toUpperCase() : ''; // Check if button exists
+
+            // Check if the button text matches the provided letter
+            if (buttonText === letter) {
+                // Highlight the button by changing its color to yellow
+                if (button) {
+                    button.style.backgroundColor = "yellow";
+                }
+            }
+        }
+    }
+}
+
+
+// Function to start the countdown
+function startTimer(duration, display) {
+    let timer = duration, minutes, seconds;
+    setInterval(function () {
+        minutes = parseInt(timer / 60, 10);
+        seconds = parseInt(timer % 60, 10);
+
+
+        minutes = minutes < 10 ? "0" + minutes : minutes;
+        seconds = seconds < 10 ? "0" + seconds : seconds;
+
+
+        display.textContent = minutes + ":" + seconds;
+        if (timer === 0) {
+                // Will trigger HINT function from java and reset timer back to 1min
+                let timer = duration, minutes, seconds;
+                highlight();
+                // You can replace the console.log statement with your custom action
+            }
+
+
+
+        if (--timer < 0) {
+            timer = duration;
+        }
+    }, 1000);
+}
+
+function scratchOut(word){
+  
+  word.classList.toggle('strikethrough');
+  
+}
+
+
+
+function joinLobby() {
+
+    const nickname = document.getElementById("nickname").value.trim();
+
+    //checks if nickname is not empty or NULL
+    if(nickname === null || !nickname || nickname === ""){
+
+        alert("Please Enter a Valid Username");
+
+    } else if(nicknames.includes(nickname)){
+
+        alert("Username Already in Use");
+
+    } else {
+
+        document.getElementById("nicknameInput").style.display = "none";
+        document.getElementById("waitingPlayersList").style.display = "block";
+        //sends nickname to java side
+        myUsername = nickname;
+        console.log("my username is: " + myUsername);
+        U = new UserEvent();
+        U.setUsername(nickname);
+        U.setType("username");
+        socket.send(JSON.stringify(U));
+
+    }
+
+
+}
+
+function updateNames(){
+    
+    var playerList = document.getElementById("playersList");
+    playerList.innerHTML = "";
+
+    nicknames.forEach(names => {
+
+        var validNickname = document.createElement("li");
+        validNickname.textContent = names;
+        console.log("appending child: " + names);
+        playerList.appendChild(validNickname);
+        displayNames.push(names);
+
+    });
+
+}
+
+function startGame() {
+
+    document.getElementById("waitingPlayersList").style.display = "none";
+    document.getElementById("gameTable").style.display = "grid";
+  
+   
+    U.setType("gameStart");
+    socket.send(JSON.stringify(U));
+    
+}
+
+function addUsernames(receivedUsernames){
+
+    nicknames = [];
+
+    for(var i = 0; i < receivedUsernames.length; i++){
+
+        nicknames.push(receivedUsernames[i]);
+        console.log("addUsername: "+ receivedUsernames[i]);
+        console.log("nickname i: " + nicknames[i]);
+
+    }
+
+}
+
+function displayWaitingPlayers(players) {
+    try {
+        // Check if players is an array
+        if (!Array.isArray(players)) {
+            throw new TypeError("Players must be an array.");
+        }
+
+        // Get the players list element
+        let playersList = document.getElementById("playersList");
+        
+        // Clear the existing player list
+        playersList.innerHTML = "";
+
+        // Iterate over each player in the array
+        players.forEach(player => {
+            // Create a list item for the player
+            let listItem = document.createElement("li");
+            
+            // Set the text content of the list item to the player's name
+            listItem.textContent = player;
+            
+            // Append the list item to the players list
+            playersList.appendChild(listItem);
+        });
+        
+        // Hide the nickname input field
+        document.getElementById("nicknameInput").style.display = "none";
+        
+        // Display the waiting players list
+        document.getElementById("waitingPlayersList").style.display = "block";
+    } catch (error) {
+        // Handle any errors that may occur
+        console.error("An error occurred while displaying waiting players:", error);
+    }
+}
+
+window.addEventListener('beforeunload', function(){
+    const myUsername = document.getElementById("nickname").value.trim();
+    if(myUsername != ''){
+        U.setUsername(myUsername);
+        U.setType("removeUsername");
+        socket.send(JSON.stringify(U));
+    }
+});
+
+    </script>
+</body>
+</html>
